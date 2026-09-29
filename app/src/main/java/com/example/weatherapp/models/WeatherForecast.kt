@@ -3,9 +3,12 @@ package com.example.weatherapp.models
 import androidx.annotation.DrawableRes
 
 data class WeatherForecast(
-    val date: String,           // maybe change to date?
+    val date: String,
     val highTemp: Int,
     val lowTemp: Int,
-    val summary: String,        // desc like chance of rain 20%, maybe humidity here?
+    val humidity: Int,
+    val rainChance: Int,
+    val rainAmount: Double? = null, // Makes the amount optional incase theres none, or cant find an amount provided
+    val windSpeed: Int,
     @DrawableRes val iconRes: Int
 )

@@ -9,5 +9,6 @@ data class CurrentWeather(
     val windDirection: String,
     val windSpeed: Int,
     val condition: String,      // like overcast, cloudy, sunny etc
+//    val humitidy: Int,
     @DrawableRes val iconRes: Int
 )
