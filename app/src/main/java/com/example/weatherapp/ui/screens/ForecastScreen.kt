@@ -37,6 +37,7 @@ fun ForecastScreen(innerPadding: PaddingValues) {
             humidity = 89,
             rainChance = 17,
             windSpeed = 4,
+            condition = "Cloudy",
             iconRes = R.drawable.cloudy
         ),
         WeatherForecast(
@@ -46,6 +47,7 @@ fun ForecastScreen(innerPadding: PaddingValues) {
             humidity = 79,
             rainChance = 18,
             windSpeed = 12,
+            condition = "Partially Cloudy",
             iconRes = R.drawable.partial_cloudy
         ),
         WeatherForecast(
@@ -55,6 +57,7 @@ fun ForecastScreen(innerPadding: PaddingValues) {
             humidity = 82,
             rainChance = 22,
             windSpeed = 10,
+            condition = "Cloudy",
             iconRes = R.drawable.cloudy
         ),
         WeatherForecast(
@@ -64,6 +67,7 @@ fun ForecastScreen(innerPadding: PaddingValues) {
             humidity = 71,
             rainChance = 24,
             windSpeed = 14,
+            condition = "Sunny",
             iconRes = R.drawable.sunny
         ),
         WeatherForecast(
@@ -73,6 +77,7 @@ fun ForecastScreen(innerPadding: PaddingValues) {
             humidity = 62,
             rainChance = 12,
             windSpeed = 9,
+            condition = "Sunny",
             iconRes = R.drawable.sunny
         ),
         WeatherForecast(
@@ -82,6 +87,7 @@ fun ForecastScreen(innerPadding: PaddingValues) {
             humidity = 100,
             rainChance = 45,
             windSpeed = 14,
+            condition = "Rain",
             iconRes = R.drawable.rain
         )
     )
@@ -106,6 +112,8 @@ fun ForecastScreen(innerPadding: PaddingValues) {
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+                Text(day.condition)
 
                 Text("${day.highTemp}°C High  ${day.lowTemp}°C Low")
 

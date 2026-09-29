@@ -10,5 +10,6 @@ data class WeatherForecast(
     val rainChance: Int,
     val rainAmount: Double? = null, // Makes the amount optional incase theres none, or cant find an amount provided
     val windSpeed: Int,
+    val condition: String,
     @DrawableRes val iconRes: Int
 )
