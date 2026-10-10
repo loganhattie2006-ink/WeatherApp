@@ -45,7 +45,7 @@ fun Navigation(){
 
                 title = {
                     when (selectedIndex){ // checks the selected index to change the top bars content
-                        0 -> Text("Todays Weather")
+                        0 -> Text("Today's Weather")
                         1-> Text("6 Day Forecast")
                         else -> Text("Weather")
                     }
