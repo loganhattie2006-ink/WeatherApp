@@ -2,6 +2,7 @@ package com.example.weatherapp
 
 import android.annotation.SuppressLint
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.jvm.java
+import androidx.compose.runtime.mutableStateListOf
 
 class MainViewModel : ViewModel() {
 
@@ -29,10 +31,25 @@ class MainViewModel : ViewModel() {
         .build()
         .create(WeatherAPI::class.java)
 
-    fun loadWeather(location: String) {
+
+
+    var myLocationName by mutableStateOf<String?>(null)   // e.g. "Halifax", shown under My Location
+        private set
+    var myLocationQuery by mutableStateOf<String?>(null)  // the "lat,lon" so it can be reloaded later
+        private set
+
+    // placeholders to test selecting; step 2 replaces these with real adds, step 3 to save
+    val savedLocations = mutableStateListOf("Toronto", "Vancouver")
+
+    fun loadWeather(location: String, isMyLocation: Boolean = false) {
         viewModelScope.launch {
             try {
-                weather = api.getForecast(API_KEY, location, 3) // API key is stored in local properties
+                val result = api.getForecast(API_KEY, location, 3)
+                weather = result
+                if (isMyLocation) {
+                    myLocationName = result.location.name
+                    myLocationQuery = location
+                }
                 errorMessage = null
             } catch (e: Exception) {
                 errorMessage = "Couldn't load weather: ${e.message}"
@@ -46,7 +63,7 @@ class MainViewModel : ViewModel() {
         client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
             .addOnSuccessListener { location ->
                 if (location != null) {
-                    loadWeather("${location.latitude},${location.longitude}") // WeatherAPI accepts "lat,lon" as the location
+                    loadWeather("${location.latitude},${location.longitude}", isMyLocation = true) // WeatherAPI accepts "lat,lon" as the location
                 } else {
                     loadWeather("Halifax") // no fix available, so fall back to halifax as a default
                 }

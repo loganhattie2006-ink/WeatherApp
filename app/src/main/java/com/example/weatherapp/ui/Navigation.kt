@@ -5,10 +5,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.WbCloudy
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
@@ -29,10 +32,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.weatherapp.MainViewModel
 import com.example.weatherapp.ui.screens.CurrentWeatherScreen
 import com.example.weatherapp.ui.screens.ForecastScreen
+import com.example.weatherapp.ui.screens.LocationsScreen
 import com.google.android.gms.location.LocationServices
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,13 +49,16 @@ fun Navigation(viewModel: MainViewModel = viewModel()) {
     val context = LocalContext.current
     val fusedClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val onLocations = backStackEntry?.destination?.route == "LocationsScreen"
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()) { results -> // runs after the user answers the prompt
         if (results.values.any { it }) { // fine OR coarse was granted
             viewModel.loadDeviceLocationWeather(fusedClient)
-        } else {
-            viewModel.loadWeather("Halifax") // denied, so show the default location instead
-          }
+        } else if (viewModel.weather == null) { // only fall back if nothing has loaded yet
+            viewModel.loadWeather("Halifax")
+        }
     }
 
     LaunchedEffect(Unit) { // runs once when the app starts
@@ -74,12 +82,21 @@ fun Navigation(viewModel: MainViewModel = viewModel()) {
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
-
-                title = { Text(locationTitle) } // removed the old index check since the req wants just location
-
-
-
-
+                title = { Text(if (onLocations) "Locations" else locationTitle) },
+                navigationIcon = {
+                    if (onLocations) { // back arrow only on the Locations screen
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                },
+                actions = { // the "action" the rubric asks for
+                    if (!onLocations) {
+                        IconButton(onClick = { navController.navigate("LocationsScreen") }) {
+                            Icon(Icons.Default.LocationOn, contentDescription = "Locations")
+                        }
+                    }
+                }
             )
 
         },
@@ -133,6 +150,27 @@ fun Navigation(viewModel: MainViewModel = viewModel()) {
             }
             composable(route = "ForecastScreen") { // Same but for the forecast screen
                 ForecastScreen(innerPadding, days)
+            }
+
+            composable(route = "LocationsScreen") {
+                LocationsScreen(
+                    innerPadding = innerPadding,
+                    myLocationName = viewModel.myLocationName,
+                    savedLocations = viewModel.savedLocations,
+                    onSelectMyLocation = {
+                        viewModel.myLocationQuery?.let { viewModel.loadWeather(it, isMyLocation = true) }
+                        navController.popBackStack()
+                    },
+                    onSelectSaved = { name ->
+                        viewModel.loadWeather(name)
+                        navController.popBackStack()
+                    },
+                    onRequestPermission = {
+                        permissionLauncher.launch(
+                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+                        )
+                    }
+                )
             }
         }
 
