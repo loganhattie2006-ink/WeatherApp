@@ -1,6 +1,8 @@
 package com.example.weatherapp
 
 import android.annotation.SuppressLint
+import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,9 +19,12 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.jvm.java
 import androidx.compose.runtime.mutableStateListOf
+import androidx.lifecycle.AndroidViewModel
 import com.example.weatherapp.Data.dao.SearchResult
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
-class MainViewModel : ViewModel() {
+class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     var weather by mutableStateOf<WeatherResponse?>(null)
         private set
@@ -42,7 +47,31 @@ class MainViewModel : ViewModel() {
     var searchResults by mutableStateOf<List<SearchResult>>(emptyList())
         private set
 
-    val savedLocations = mutableStateListOf<SearchResult>() // replaces the "Toronto"/"Vancouver" placeholders
+    private val prefs = application.getSharedPreferences("weather_prefs", Context.MODE_PRIVATE)
+    private val gson = Gson()
+
+    val savedLocations = mutableStateListOf<SearchResult>()
+
+    init {
+        loadSavedLocations() // runs once when the ViewModel is created, i.e. at app start
+    }
+
+    private fun loadSavedLocations() {
+        val json = prefs.getString("saved_locations", null) ?: return // nothing saved yet
+        try {
+            val type = object : TypeToken<List<SearchResult>>() {}.type
+            val list: List<SearchResult> = gson.fromJson(json, type)
+            savedLocations.addAll(list)
+        } catch (e: Exception) {
+            android.util.Log.e("WeatherApp", "couldn't read saved locations", e)
+        }
+    }
+
+    private fun saveSavedLocations() {
+        prefs.edit()
+            .putString("saved_locations", gson.toJson(savedLocations.toList()))
+            .apply()
+    }
 
     fun searchCities(query: String) {
         if (query.isBlank()) return
@@ -58,10 +87,14 @@ class MainViewModel : ViewModel() {
     }
 
     fun addSavedLocation(place: SearchResult) {
-        if (savedLocations.none { it.id == place.id }) { // don't allow the same city twice
+        if (savedLocations.none { it.id == place.id }) {
             savedLocations.add(place)
+            saveSavedLocations() // write the new list to storage
         }
     }
+
+
+
 
     fun loadWeather(location: String, isMyLocation: Boolean = false) {
         viewModelScope.launch {
