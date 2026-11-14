@@ -1,55 +1,65 @@
-
-
 //Displays the weather information for the current day
 
 package com.example.weatherapp.ui.screens
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.weatherapp.models.CurrentWeather
+import coil3.compose.AsyncImage
+import com.example.weatherapp.Data.dao.WeatherResponse
+import kotlin.math.roundToInt
 
 @Composable
-fun CurrentWeatherScreen(innerPadding: PaddingValues) {
-
-    // placeholder info, i wanna try and expand the app to have location options so im storing location in the example data
-    val weather = CurrentWeather(
-        location = "Halifax, Nova Scotia",
-        temperature = 18,
-        feelsLike = 18,
-        windDirection = "NW",
-        windSpeed = 6,
-        condition = "Showers",
-        iconRes = com.example.weatherapp.R.drawable.rain
-    )
-
+fun CurrentWeatherScreen(innerPadding: PaddingValues, weather: WeatherResponse?) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)
+        modifier = Modifier.fillMaxSize().padding(innerPadding)
     ) {
-        Image(
-            painter = painterResource(weather.iconRes),
-            contentDescription = weather.condition
-        )
+        if (weather == null) { // the API call hasn't finished yet, so there is no data to show
+            Text("Loading...")
+        } else {
+            val current = weather.current // holds the temp, wind and condition for right now
 
-        Text(text = weather.condition,
-            style = MaterialTheme.typography.titleLarge)
+            AsyncImage( // loads the icon from the web, the API's icon links are missing the https:
+                model = "https:${current.condition.icon}",
+                contentDescription = current.condition.text,
+                modifier = Modifier.size(96.dp)
+            )
 
-        Text(text = "${weather.temperature}°C",
-            style = MaterialTheme.typography.displayLarge)
+            Text(current.condition.text, style = MaterialTheme.typography.titleLarge)
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Text("${current.tempC.roundToInt()}°C", style = MaterialTheme.typography.displayLarge)
 
-        Text("Feels like ${weather.feelsLike}°C")
-        Text("Wind ${weather.windDirection} ${weather.windSpeed} kph")
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("Feels like ${current.feelsLikeC.roundToInt()}°C")
+
+            Text("Wind ${current.windDir} ${current.windKph.roundToInt()} kph")
+
+            val today = weather.forecast.forecastDay.firstOrNull()?.day // today's forecast holds the rain chance and amount
+
+            if (today != null && today.chanceOfRain > 0) {
+                val rainText = if (today.totalPrecipMm > 0.0) {
+                    "Chance of rain ${today.chanceOfRain}%. Amount ${today.totalPrecipMm}mm."
+                } else {
+                    "Chance of rain ${today.chanceOfRain}%."
+                }
+                Text(rainText)
+            }
+
+            Text("Humidity ${current.humidity}%")
+        }
     }
 }
