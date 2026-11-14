@@ -156,15 +156,18 @@ fun Navigation(viewModel: MainViewModel = viewModel()) {
                 LocationsScreen(
                     innerPadding = innerPadding,
                     myLocationName = viewModel.myLocationName,
+                    searchResults = viewModel.searchResults,
                     savedLocations = viewModel.savedLocations,
                     onSelectMyLocation = {
                         viewModel.myLocationQuery?.let { viewModel.loadWeather(it, isMyLocation = true) }
                         navController.popBackStack()
                     },
-                    onSelectSaved = { name ->
-                        viewModel.loadWeather(name)
+                    onSelectSaved = { place ->
+                        viewModel.loadWeather("id:${place.id}") // the exact-match format, so no mix-ups between same-named cities
                         navController.popBackStack()
                     },
+                    onSearch = { viewModel.searchCities(it) },
+                    onAdd = { viewModel.addSavedLocation(it) },
                     onRequestPermission = {
                         permissionLauncher.launch(
                             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)

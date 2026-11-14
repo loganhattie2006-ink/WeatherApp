@@ -17,6 +17,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.jvm.java
 import androidx.compose.runtime.mutableStateListOf
+import com.example.weatherapp.Data.dao.SearchResult
 
 class MainViewModel : ViewModel() {
 
@@ -38,8 +39,29 @@ class MainViewModel : ViewModel() {
     var myLocationQuery by mutableStateOf<String?>(null)  // the "lat,lon" so it can be reloaded later
         private set
 
-    // placeholders to test selecting; step 2 replaces these with real adds, step 3 to save
-    val savedLocations = mutableStateListOf("Toronto", "Vancouver")
+    var searchResults by mutableStateOf<List<SearchResult>>(emptyList())
+        private set
+
+    val savedLocations = mutableStateListOf<SearchResult>() // replaces the "Toronto"/"Vancouver" placeholders
+
+    fun searchCities(query: String) {
+        if (query.isBlank()) return
+        viewModelScope.launch {
+            try {
+                searchResults = api.searchLocations(API_KEY, query.trim())
+                    .filter { it.country == "Canada" } // the endpoint searches worldwide, so keep only Canadian places as the reqs wanted
+            } catch (e: Exception) {
+                searchResults = emptyList()
+                android.util.Log.e("WeatherApp", "searchCities failed", e)
+            }
+        }
+    }
+
+    fun addSavedLocation(place: SearchResult) {
+        if (savedLocations.none { it.id == place.id }) { // don't allow the same city twice
+            savedLocations.add(place)
+        }
+    }
 
     fun loadWeather(location: String, isMyLocation: Boolean = false) {
         viewModelScope.launch {
