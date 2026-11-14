@@ -1,5 +1,8 @@
 package com.example.weatherapp.ui
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.WbCloudy
@@ -21,6 +24,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -29,6 +33,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.weatherapp.MainViewModel
 import com.example.weatherapp.ui.screens.CurrentWeatherScreen
 import com.example.weatherapp.ui.screens.ForecastScreen
+import com.google.android.gms.location.LocationServices
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,8 +41,25 @@ fun Navigation(viewModel: MainViewModel = viewModel()) {
     val navController = rememberNavController()
     var selectedIndex by remember { mutableIntStateOf(0) }// default set to zero
 
-    LaunchedEffect(Unit) {
-        viewModel.loadWeather("Halifax")
+    val context = LocalContext.current
+    val fusedClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()) { results -> // runs after the user answers the prompt
+        if (results.values.any { it }) { // fine OR coarse was granted
+            viewModel.loadDeviceLocationWeather(fusedClient)
+        } else {
+            viewModel.loadWeather("Halifax") // denied, so show the default location instead
+          }
+    }
+
+    LaunchedEffect(Unit) { // runs once when the app starts
+        permissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
     }
 
     val days = viewModel.weather?.forecast?.forecastDay.orEmpty()

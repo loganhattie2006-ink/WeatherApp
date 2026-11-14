@@ -1,5 +1,6 @@
 package com.example.weatherapp
 
+import android.annotation.SuppressLint
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -7,7 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weatherapp.BuildConfig.API_KEY
 import com.example.weatherapp.Data.dao.WeatherResponse
-import com.example.weatherapp.Data.weatherAPI
+import com.example.weatherapp.Data.WeatherAPI
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -24,7 +27,7 @@ class MainViewModel : ViewModel() {
         .baseUrl("https://api.weatherapi.com/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
-        .create(weatherAPI::class.java)
+        .create(WeatherAPI::class.java)
 
     fun loadWeather(location: String) {
         viewModelScope.launch {
@@ -36,5 +39,20 @@ class MainViewModel : ViewModel() {
                 android.util.Log.e("WeatherApp", "loadWeather failed", e)
             }
         }
+    }
+
+    @SuppressLint("MissingPermission") // only called after the permission result says it was granted
+    fun loadDeviceLocationWeather(client: FusedLocationProviderClient) {
+        client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    loadWeather("${location.latitude},${location.longitude}") // WeatherAPI accepts "lat,lon" as the location
+                } else {
+                    loadWeather("Halifax") // no fix available, so fall back to halifax as a default
+                }
+            }
+            .addOnFailureListener {
+                loadWeather("Halifax")
+            }
     }
 }
