@@ -11,8 +11,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -37,7 +41,8 @@ fun LocationsScreen(
     onSelectSaved: (SearchResult) -> Unit,
     onSearch: (String) -> Unit,
     onAdd: (SearchResult) -> Unit,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    onRemove: (SearchResult) -> Unit
 ) {
     var query by remember { mutableStateOf("") } // what's typed in the box, only this screen needs it
 
@@ -103,10 +108,21 @@ fun LocationsScreen(
         }
 
         items(savedLocations) { place ->
-            Text(
-                text = "${place.name}, ${place.region}",
-                modifier = Modifier.fillMaxWidth().clickable { onSelectSaved(place) }.padding(16.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "${place.name}, ${place.region}",
+                    modifier = Modifier
+                        .weight(1f)                         // takes all the space the button doesn't need
+                        .clickable { onSelectSaved(place) } // only the text selects the city, not the whole row
+                        .padding(16.dp)
+                )
+                IconButton(onClick = { onRemove(place) }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Remove ${place.name}")
+                }
+            }
             HorizontalDivider()
         }
     }

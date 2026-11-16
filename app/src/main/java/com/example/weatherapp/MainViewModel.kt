@@ -93,6 +93,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun removeSavedLocation(place: SearchResult) {
+        savedLocations.removeAll { it.id == place.id } // remove the matching entry from the list
+        saveSavedLocations()                           // write the shortened list to storage
+    }
+
 
 
 

@@ -62,12 +62,14 @@ fun Navigation(viewModel: MainViewModel = viewModel()) {
     }
 
     LaunchedEffect(Unit) { // runs once when the app starts
-        permissionLauncher.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
+        if(viewModel.weather == null) {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
             )
-        )
+        }
     }
 
     val days = viewModel.weather?.forecast?.forecastDay.orEmpty()
@@ -146,7 +148,7 @@ fun Navigation(viewModel: MainViewModel = viewModel()) {
             startDestination = "CurrentScreen", //defaults to the daily weather
         ) {
             composable(route = "CurrentScreen") { // When its daily weather it runs the function for the daily weather screen
-                CurrentWeatherScreen(innerPadding, viewModel.weather)
+                CurrentWeatherScreen(innerPadding, viewModel.weather, viewModel.errorMessage)
             }
             composable(route = "ForecastScreen") { // Same but for the forecast screen
                 ForecastScreen(innerPadding, days)
@@ -172,7 +174,9 @@ fun Navigation(viewModel: MainViewModel = viewModel()) {
                         permissionLauncher.launch(
                             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                         )
-                    }
+                    },
+                    onRemove = { viewModel.removeSavedLocation(it) },
+
                 )
             }
         }

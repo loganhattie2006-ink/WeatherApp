@@ -2,6 +2,7 @@
 
 package com.example.weatherapp.ui.screens
 
+import android.R
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,14 +22,14 @@ import com.example.weatherapp.Data.dao.WeatherResponse
 import kotlin.math.roundToInt
 
 @Composable
-fun CurrentWeatherScreen(innerPadding: PaddingValues, weather: WeatherResponse?) {
+fun CurrentWeatherScreen(innerPadding: PaddingValues, weather: WeatherResponse?, errorMessage: String?) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize().padding(innerPadding)
     ) {
         if (weather == null) { // the API call hasn't finished yet, so there is no data to show
-            Text("Loading...")
+            Text(errorMessage ?: "Loading...")
         } else {
             val current = weather.current // holds the temp, wind and condition for right now
 
